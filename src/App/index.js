@@ -1,3 +1,4 @@
+/* eslint-disable react-native/no-inline-styles */
 import React, {useState, useRef} from 'react';
 import {
   View,
@@ -5,16 +6,35 @@ import {
   TextInput,
   TouchableOpacity,
   SafeAreaView,
+  Keyboard,
 } from 'react-native';
 import styles from './styles';
+import api from '../services/api';
 
 export default function App() {
   const [cep, setCep] = useState('');
   const inputRef = useRef();
+  const [cepUser, setCepUser] = useState(null);
+
+  async function buscar() {
+    if (cep == '') {
+      alert('Digite um cep valido');
+      setCep('');
+      return;
+    }
+    try {
+      const response = await api.get(`${cep}/json`);
+      setCepUser(response.data);
+      Keyboard.dismiss();
+    } catch (error) {
+      console.log('ERRO: ' + error);
+    }
+  }
 
   function limpar() {
     setCep('');
     inputRef.current.focus();
+    setCepUser(null);
   }
 
   return (
@@ -31,20 +51,22 @@ export default function App() {
         />
       </View>
       <View style={styles.areaBtn}>
-        <TouchableOpacity style={styles.botao}>
+        <TouchableOpacity style={styles.botao} onPress={buscar}>
           <Text style={styles.botaoText}>Buscar</Text>
         </TouchableOpacity>
         <TouchableOpacity style={styles.botao} onPress={limpar}>
           <Text style={styles.botaoText}>Limpar</Text>
         </TouchableOpacity>
       </View>
-      <View style={styles.resultado}>
-        <Text style={styles.itemText}> CEP: 15989302</Text>
-        <Text style={styles.itemText}> Logradouro: 15989302</Text>
-        <Text style={styles.itemText}> Bairro: 15989302</Text>
-        <Text style={styles.itemText}> Cidade: 15989302</Text>
-        <Text style={styles.itemText}> Estado: 15989302</Text>
-      </View>
+      {cepUser && (
+        <View style={styles.resultado}>
+          <Text style={styles.itemText}> CEP: {cepUser.cep}</Text>
+          <Text style={styles.itemText}> Logradouro: {cepUser.logradouro}</Text>
+          <Text style={styles.itemText}> Bairro: {cepUser.bairro}</Text>
+          <Text style={styles.itemText}> Cidade: {cepUser.localidade}</Text>
+          <Text style={styles.itemText}> Estado: {cepUser.uf}</Text>
+        </View>
+      )}
     </SafeAreaView>
   );
 }
